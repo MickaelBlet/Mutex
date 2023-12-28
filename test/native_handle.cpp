@@ -7,10 +7,8 @@
 #include "blet/mutex.h"
 
 GTEST_TEST(mutex, native_handle) {
-    EXPECT_NO_THROW(
-        {
-            blet::Mutex mutex;
-            mutex.native_handle();
-        }
-    );
+    EXPECT_NO_THROW({
+        blet::Mutex mutex;
+        mutex.native_handle();
+    });
 }

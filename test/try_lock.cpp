@@ -6,7 +6,7 @@
 using ::testing::_;
 using ::testing::Return;
 
-MOCKC_METHOD1(pthread_mutex_trylock, int(pthread_mutex_t *__mutex));
+MOCKC_METHOD1(pthread_mutex_trylock, int(pthread_mutex_t* __mutex));
 
 GTEST_TEST(mutex, try_lock) {
     MOCKC_NEW_INSTANCE(pthread_mutex_trylock);

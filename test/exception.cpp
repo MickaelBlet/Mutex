@@ -6,8 +6,8 @@
 using ::testing::_;
 using ::testing::Return;
 
-MOCKC_METHOD1(pthread_mutex_lock, int(pthread_mutex_t *__mutex));
-MOCKC_METHOD1(pthread_mutex_unlock, int(pthread_mutex_t *__mutex));
+MOCKC_METHOD1(pthread_mutex_lock, int(pthread_mutex_t* __mutex));
+MOCKC_METHOD1(pthread_mutex_unlock, int(pthread_mutex_t* __mutex));
 
 GTEST_TEST(mutex, lock) {
     MOCKC_NEW_INSTANCE(pthread_mutex_lock);
@@ -28,12 +28,14 @@ GTEST_TEST(mutex, lock) {
                 mutex.lock();
             }
             catch (const blet::Mutex::Exception& e) {
-                EXPECT_STREQ(e.what(), "the mutex could not be acquired because the maximum number of recursive locks for mutex has been exceeded");
+                EXPECT_STREQ(
+                    e.what(),
+                    "the mutex could not be acquired because the maximum "
+                    "number of recursive locks for mutex has been exceeded");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
     EXPECT_THROW(
         {
             try {
@@ -41,12 +43,15 @@ GTEST_TEST(mutex, lock) {
                 mutex.lock();
             }
             catch (const blet::Mutex::Exception& e) {
-                EXPECT_STREQ(e.what(), "the mutex was created with the protocol attribute having the value PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than the mutex's current priority ceiling");
+                EXPECT_STREQ(e.what(),
+                             "the mutex was created with the protocol "
+                             "attribute having the value PTHREAD_PRIO_PROTECT "
+                             "and the calling thread's priority is higher than "
+                             "the mutex's current priority ceiling");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
     EXPECT_THROW(
         {
             try {
@@ -54,12 +59,12 @@ GTEST_TEST(mutex, lock) {
                 mutex.lock();
             }
             catch (const blet::Mutex::Exception& e) {
-                EXPECT_STREQ(e.what(), "the current thread already owns the mutex");
+                EXPECT_STREQ(e.what(),
+                             "the current thread already owns the mutex");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
     EXPECT_THROW(
         {
             try {
@@ -67,12 +72,12 @@ GTEST_TEST(mutex, lock) {
                 mutex.lock();
             }
             catch (const blet::Mutex::Exception& e) {
-                EXPECT_STREQ(e.what(), "the current thread does not own the mutex");
+                EXPECT_STREQ(e.what(),
+                             "the current thread does not own the mutex");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
     EXPECT_THROW(
         {
             try {
@@ -83,16 +88,14 @@ GTEST_TEST(mutex, lock) {
                 EXPECT_STREQ(e.what(), "unknown error");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
 }
 
 GTEST_TEST(mutex, unlock) {
     MOCKC_NEW_INSTANCE(pthread_mutex_unlock);
 
-    MOCKC_EXPECT_CALL(pthread_mutex_unlock, (_))
-        .WillOnce(Return(EPERM));
+    MOCKC_EXPECT_CALL(pthread_mutex_unlock, (_)).WillOnce(Return(EPERM));
 
     MOCKC_GUARD(pthread_mutex_unlock);
 
@@ -103,10 +106,10 @@ GTEST_TEST(mutex, unlock) {
                 mutex.unlock();
             }
             catch (const blet::Mutex::Exception& e) {
-                EXPECT_STREQ(e.what(), "the current thread does not own the mutex");
+                EXPECT_STREQ(e.what(),
+                             "the current thread does not own the mutex");
                 throw;
             }
-        }
-        , blet::Mutex::Exception
-    );
+        },
+        blet::Mutex::Exception);
 }
