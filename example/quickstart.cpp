@@ -1,9 +1,3 @@
-# Mutex
-std::mutex and std::lock_guard for C++ 98 on one header only file.
-
-## Quickstart
-
-```cpp
 #include <unistd.h>
 
 #include <iostream>
@@ -13,6 +7,7 @@ std::mutex and std::lock_guard for C++ 98 on one header only file.
 static void* routine(void* e) {
     blet::Mutex* pMutex = reinterpret_cast<blet::Mutex*>(e);
     {
+        std::cout << "Wait thread" << std::endl;
         blet::LockGuard<blet::Mutex> lockguard(*pMutex);
         std::cout << "Hello thread" << std::endl;
     }
@@ -29,7 +24,7 @@ int main(int argc, char* argv[]) {
     pthread_create(&tid, NULL, &routine, &mutex);
     sleep(1);
     mutex.unlock();
-    sleep(0);
+    // sleep(0);
     {
         blet::LockGuard<blet::Mutex> lockguard(mutex);
         std::cout << "Hello main" << std::endl;
@@ -38,8 +33,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
-// ouput:
-// Hello thread
-// Hello main
-```
