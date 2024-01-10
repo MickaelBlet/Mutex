@@ -1,21 +1,46 @@
-#ifndef _BLET_MUTEX_H_
-#define _BLET_MUTEX_H_
+/**
+ * mutex.h
+ *
+ * Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+ * Copyright (c) 2024 BLET Mickaël.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef BLET_MUTEX_H_
+#define BLET_MUTEX_H_
 
 #include <errno.h>
 #include <pthread.h>
 
 #include <exception>
 
-#define _BLET_MUTEX_EXCEPTION_EINVAL                                         \
+#define BLET_MUTEX_EXCEPTION_EINVAL_                                         \
     "the mutex was created with the protocol attribute having the value "    \
     "PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than " \
     "the mutex's current priority ceiling"
-#define _BLET_MUTEX_EXCEPTION_EAGAIN                                           \
+#define BLET_MUTEX_EXCEPTION_EAGAIN_                                           \
     "the mutex could not be acquired because the maximum number of recursive " \
     "locks for mutex has been exceeded"
-#define _BLET_MUTEX_EXCEPTION_EDEADLK \
+#define BLET_MUTEX_EXCEPTION_EDEADLK_ \
     "the current thread already owns the mutex"
-#define _BLET_MUTEX_EXCEPTION_EPERM "the current thread does not own the mutex"
+#define BLET_MUTEX_EXCEPTION_EPERM_ "the current thread does not own the mutex"
 
 namespace blet {
 
@@ -25,33 +50,33 @@ class Mutex {
       public:
         Exception(const Mutex& mutex, int retValue) :
             std::exception(),
-            _mutex(mutex) {
+            mutex_(mutex) {
             switch (retValue) {
                 case EINVAL:
-                    _what = _BLET_MUTEX_EXCEPTION_EINVAL;
+                    what_ = BLET_MUTEX_EXCEPTION_EINVAL_;
                     break;
                 case EAGAIN:
-                    _what = _BLET_MUTEX_EXCEPTION_EAGAIN;
+                    what_ = BLET_MUTEX_EXCEPTION_EAGAIN_;
                     break;
                 case EDEADLK:
-                    _what = _BLET_MUTEX_EXCEPTION_EDEADLK;
+                    what_ = BLET_MUTEX_EXCEPTION_EDEADLK_;
                     break;
                 case EPERM:
-                    _what = _BLET_MUTEX_EXCEPTION_EPERM;
+                    what_ = BLET_MUTEX_EXCEPTION_EPERM_;
                     break;
                 default:
-                    _what = "unknown error";
+                    what_ = "unknown error";
                     break;
             }
         }
         virtual ~Exception() throw() {}
         const char* what() const throw() {
-            return _what;
+            return what_;
         }
 
       protected:
-        const char* _what;
-        const Mutex& _mutex;
+        const char* what_;
+        const Mutex& mutex_;
     };
 
     /**
@@ -73,14 +98,14 @@ class Mutex {
      * @param pAttr The attributes of mutex.
      */
     Mutex(const pthread_mutexattr_t* pAttr = NULL) {
-        ::pthread_mutex_init(&_mutex, pAttr);
+        ::pthread_mutex_init(&mutex_, pAttr);
     }
 
     /**
      * @brief Destroy the Mutex object.
      */
     ~Mutex() {
-        ::pthread_mutex_destroy(&_mutex);
+        ::pthread_mutex_destroy(&mutex_);
     }
 
     /**
@@ -94,7 +119,7 @@ class Mutex {
      * resource_deadlock_would_occur instead of deadlocking.
      */
     void lock() {
-        int retLock = ::pthread_mutex_lock(&_mutex);
+        int retLock = ::pthread_mutex_lock(&mutex_);
         if (retLock) {
             throw Exception(*this, retLock);
         }
@@ -112,7 +137,7 @@ class Mutex {
      * behavior is undefined.
      */
     bool try_lock() {
-        int retLock = ::pthread_mutex_trylock(&_mutex);
+        int retLock = ::pthread_mutex_trylock(&mutex_);
         return !retLock;
     }
 
@@ -126,7 +151,7 @@ class Mutex {
      * subsequent lock operation that obtains ownership of the same mutex.
      */
     void unlock() {
-        int retUnlock = ::pthread_mutex_unlock(&_mutex);
+        int retUnlock = ::pthread_mutex_unlock(&mutex_);
         if (retUnlock) {
             throw Exception(*this, retUnlock);
         }
@@ -136,11 +161,11 @@ class Mutex {
      * @return pthread_mutex_t& Reference of real mutex structrure.
      */
     pthread_mutex_t& native_handle() {
-        return _mutex;
+        return mutex_;
     }
 
   protected:
-    pthread_mutex_t _mutex;
+    pthread_mutex_t mutex_;
 
   private:
     Mutex(const Mutex&) {}
@@ -153,15 +178,15 @@ template<class Mutex>
 class LockGuard {
   public:
     LockGuard(Mutex& mutex) :
-        _mutex(mutex) {
-        _mutex.lock();
+        mutex_(mutex) {
+        mutex_.lock();
     }
     ~LockGuard() {
-        _mutex.unlock();
+        mutex_.unlock();
     }
 
   protected:
-    Mutex& _mutex;
+    Mutex& mutex_;
 
   private:
     LockGuard(const LockGuard&) {}
@@ -172,9 +197,9 @@ class LockGuard {
 
 } // namespace blet
 
-#undef _BLET_MUTEX_EXCEPTION_EINVAL
-#undef _BLET_MUTEX_EXCEPTION_EAGAIN
-#undef _BLET_MUTEX_EXCEPTION_EDEADLK
-#undef _BLET_MUTEX_EXCEPTION_EPERM
+#undef BLET_MUTEX_EXCEPTION_EINVAL_
+#undef BLET_MUTEX_EXCEPTION_EAGAIN_
+#undef BLET_MUTEX_EXCEPTION_EDEADLK_
+#undef BLET_MUTEX_EXCEPTION_EPERM_
 
-#endif // #ifndef _BLET_MUTEX_H_
+#endif // #ifndef BLET_MUTEX_H_
